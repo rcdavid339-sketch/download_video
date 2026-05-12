@@ -1,2 +1,16 @@
-# acf7bdc15a82b69db7f74fe459c04489
-My first app
+# Downloader Vidéo
+
+Application simple pour télécharger des vidéos.
+
+## Fonctionnalités
+- Téléchargement vidéo/audio
+- Interface moderne
+- Qualité 1080p pour le moment
+- Queue de téléchargement
+
+## Utilisation
+1. Lancer l'application
+2. Coller une URL
+3. Télécharger
+
+Usage local uniquement
