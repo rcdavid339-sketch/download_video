@@ -11,6 +11,6 @@ Application simple pour télécharger des vidéos.
 ## Utilisation
 1. Lancer l'application
 2. Coller une URL
-3. Télécharger
+3. Télécharger avec la toucher " ctrl + c "
 
 Usage local uniquement
