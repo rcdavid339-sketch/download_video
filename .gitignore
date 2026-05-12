@@ -1,3 +1,6 @@
+
+
+import ctypes
 import customtkinter as ctk
 from tkinter import messagebox,filedialog
 import threading
@@ -184,15 +187,18 @@ def telecharger_video(url, qualite):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-
     finally:
-
         bouton_telecharger.configure(
             state="normal",
             text="Télécharger"
         )
+        progress_bar.pack_forget()
+        label_status.configure(text="Prêt pour un nouveau téléchargement", text_color="#94a3b8")
 
         progress_bar.pack_forget()
+
+myappid = 'mon_application.video_downloader.beta'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 fenetre = ctk.CTk()
 
