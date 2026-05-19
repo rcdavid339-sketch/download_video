@@ -1,1 +1,21 @@
-
+# Environnements virtuels
+venv/
+.venv/
+env/
+# Cache et fichiers compilés
+__pycache__/
+*.py[cod]
+*$py.class
+# Variables d'environnement et secrets
+.env
+*.pem
+# Téléchargements et médias
+downloads/
+output/
+*.mp4
+*.mp3
+*.webm
+# Fichiers système Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
