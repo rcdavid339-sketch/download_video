@@ -4,8 +4,7 @@ Application simple pour télécharger des vidéos.
 
 ## Fonctionnalités
 - Téléchargement vidéo/audio
-- Interface moderne
-- Qualité 1080p pour le moment
+- Qualité 720p/1080p/1440p 
 - Queue de téléchargement
 
 ## Utilisation
@@ -13,6 +12,5 @@ Application simple pour télécharger des vidéos.
 2. Coller une URL
 3. Télécharger avec la toucher " ctrl + c "
 4.Le ficier mp4 est enfin sur votre fichiers downloarder
-
 
 Usage local uniquement
