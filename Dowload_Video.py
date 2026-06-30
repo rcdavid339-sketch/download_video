@@ -1,11 +1,19 @@
 import ctypes
 import customtkinter as ctk
-from tkinter import messagebox,filedialog
+from tkinter import messagebox
 import threading
 import os
 import requests
 import re
 import yt_dlp
+import sys
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.dirname(__file__)
+
+
+chemin_ressource = os.path.join(base_path, 'downloadfolder_99367.ico')
 ffmpeg_path = os.path.join(
     os.path.expanduser("~"),
     "AppData",
@@ -15,8 +23,17 @@ ffmpeg_path = os.path.join(
     "bin"
 )
 os.environ["PATH"] += ";" + ffmpeg_path
-ctk.set_appearance_mode("Dark")
-ctk.set_default_color_theme("green")
+ctk.set_appearance_mode("blue")
+ctk.set_default_color_theme("blue")
+
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def download_file(url, filename, progress_callback=None):
 
@@ -144,7 +161,7 @@ def telecharger_video(url, qualite):
 
             label_status.configure(
                 text="Téléchargement terminé",
-                text_color="#4ade80"
+                text_color="#FFFFFF"
             )
 
     dossier_telechargement = os.path.join(
@@ -204,7 +221,7 @@ fenetre.iconbitmap("downloadfolder_99367.ico")
 
 fenetre.title("Download video")
 
-fenetre.geometry("600x420")
+fenetre.geometry("645x450")
 
 fenetre.resizable(False, False)
 
@@ -218,9 +235,9 @@ titre_label.pack(pady=(20, 5))
 
 sous_titre = ctk.CTkLabel(
     fenetre,
-    text="100% local mais en beta pour le moment..., CTRL+C pour copie et CTRL+V pour coller URL",
+    text="100% Local mais en beta pour le moment..., CTRL+C pour copie et CTRL+V pour coller URL",
     font=ctk.CTkFont(size=13),
-    text_color="#94a3b8"
+    text_color="#FFFFFF"
 )
 
 sous_titre.pack(pady=(0, 10))
@@ -282,7 +299,7 @@ label_qualite.pack(side="left")
 
 combo_qualite = ctk.CTkComboBox(
     frame_qualite,
-    values=["720", "1080", "1440", "2160"],
+    values=["720", "1080", "1440"],
     state="readonly",
     width=100
 )
@@ -303,9 +320,9 @@ label_qualite_info.pack(side="left")
 
 label_status = ctk.CTkLabel(
     fenetre,
-    text="pour instant, c'est en beta",
+    text="Pour instant, c'est en beta!",
     font=ctk.CTkFont(size=12),
-    text_color="#94a3b8"
+    text_color="#FFFFFF"
 )
 
 label_status.pack(pady=(5, 0))
