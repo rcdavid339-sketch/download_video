@@ -13,7 +13,7 @@ else:
     base_path = os.path.dirname(__file__)
 
 
-chemin_ressource = os.path.join(base_path, 'downloadfolder_99367.ico')
+chemin_ressource = os.path.join(base_path, '')
 ffmpeg_path = os.path.join(
     os.path.expanduser("~"),
     "AppData",
@@ -113,7 +113,7 @@ def lancer_telechargement():
 
 def telecharger_video(url, qualite):
 
-    bouton_telecharger.configure(
+    bouton_download.configure(
         state="disabled",
         text=" En cours..."
     )
@@ -170,7 +170,9 @@ def telecharger_video(url, qualite):
     )
 
     print("Téléchargement vers :", dossier_telechargement)
+
     print("FFmpeg path:", ffmpeg_path)
+
     print("Existe :", os.path.exists(ffmpeg_path))
 
     ydl_opts = {
@@ -186,6 +188,8 @@ def telecharger_video(url, qualite):
         'socket_timeout': 60,
         'retries': 10,
         'fragment_retries': 10,
+        'concurrent_fragment_downloads': 10,
+        'throttledratelimit': 0,
     }
 
     try:
@@ -203,9 +207,9 @@ def telecharger_video(url, qualite):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
     finally:
-        bouton_telecharger.configure(
+        bouton_download.configure(
             state="normal",
-            text="Télécharger"
+            text="Download"
         )
         progress_bar.pack_forget()
         label_status.configure(text="Prêt pour un nouveau téléchargement", text_color="#94a3b8")
@@ -217,7 +221,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 fenetre = ctk.CTk()
 
-fenetre.iconbitmap("downloadfolder_99367.ico")
+fenetre.iconbitmap(resource_path("assets/icon.ico"))
 
 fenetre.title("Download video")
 
@@ -291,7 +295,7 @@ frame_qualite.pack(
 
 label_qualite = ctk.CTkLabel(
     frame_qualite,
-    text=" Qualité :",
+    text=" Quality :",
     font=ctk.CTkFont(size=13, weight="bold")
 )
 
@@ -334,16 +338,16 @@ progress_bar = ctk.CTkProgressBar(
 
 progress_bar.set(0)
 
-bouton_telecharger = ctk.CTkButton(
+bouton_download = ctk.CTkButton(
     fenetre,
-    text=" Télécharger",
+    text=" Download",
     command=lancer_telechargement,
     height=45,
     font=ctk.CTkFont(size=15, weight="bold"),
     corner_radius=10
 )
 
-bouton_telecharger.pack(
+bouton_download.pack(
     pady=(8, 20),
     padx=25,
     fill="x"
