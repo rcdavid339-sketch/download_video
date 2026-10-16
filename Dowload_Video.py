@@ -1,108 +1,240 @@
 import ctypes
+import logging
+import os
+import queue
+import shutil
+import sys
+import threading
+from pathlib import Path
+from urllib.parse import urlparse
+
 import customtkinter as ctk
 from tkinter import messagebox
-import threading
-import os
-import requests
-import re
 import yt_dlp
-import sys
-if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-    base_path = sys._MEIPASS
-else:
-    base_path = os.path.dirname(__file__)
-
-
-chemin_ressource = os.path.join(base_path, '')
-ffmpeg_path = os.path.join(
-    os.path.expanduser("~"),
-    "AppData",
-    "Local",
-    "Programs",
-    "FFmpeg",
-    "bin"
-)
-os.environ["PATH"] += ";" + ffmpeg_path
-ctk.set_appearance_mode("blue")
-ctk.set_default_color_theme("blue")
 
 
 
 def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base / relative_path
 
-def download_file(url, filename, progress_callback=None):
 
-    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+TOOLS_DIR = resource_path("tools")
+DOWNLOAD_DIR = Path.home() / "Downloads"
+DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    if not filename:
-        filename = "video.mp4"
+LOG_FILE = DOWNLOAD_DIR / "DownloadVideo.log"
 
-    filepath = os.path.join(os.getcwd(), filename)
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    encoding="utf-8"
+)
 
-    try:
-        response = requests.get(url, stream=True, timeout=120)
-        response.raise_for_status()
 
-        total_size = int(response.headers.get('content-length', 0))
-        downloaded = 0
+os.environ["PATH"] = (
+    str(TOOLS_DIR)
+    + os.pathsep
+    + os.environ.get("PATH", "")
+)
 
-        with open(filepath, 'wb') as f:
 
-            for chunk in response.iter_content(chunk_size=8192):
+ffmpeg_inclus = TOOLS_DIR / "ffmpeg.exe"
 
-                if chunk:
-                    f.write(chunk)
-                    downloaded += len(chunk)
+ffmpeg_local = (
+    Path.home()
+    / "AppData"
+    / "Local"
+    / "Programs"
+    / "FFmpeg"
+    / "bin"
+    / "ffmpeg.exe"
+)
 
-                    if progress_callback and total_size > 0:
-                        progress = downloaded / total_size
-                        progress_callback(progress, downloaded, total_size)
+if ffmpeg_inclus.is_file():
+    ffmpeg_path = str(TOOLS_DIR)
 
-        return filepath
+elif ffmpeg_local.is_file():
+    ffmpeg_path = str(ffmpeg_local.parent)
 
-    except Exception as e:
-        print("Error 259+0 :", e)
-        if os.path.exists(filepath):
-            os.remove(filepath)
+else:
+    ffmpeg_path = shutil.which("ffmpeg")
 
-        raise e
+
+
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
+
+
+evenements = queue.Queue()
 
 
 def format_size(bytes_size):
-
-    for unit in ['o', 'Ko', 'Mo', 'Go']:
-
+    for unit in ("o", "Ko", "Mo", "Go"):
         if bytes_size < 1024:
             return f"{bytes_size:.1f} {unit}"
-
         bytes_size /= 1024
 
     return f"{bytes_size:.1f} To"
 
 
-def lancer_telechargement():
+def url_youtube_valide(value):
+    try:
+        parsed = urlparse(value)
+        host = (parsed.hostname or "").lower()
 
+        return (
+            parsed.scheme in ("http", "https")
+            and (
+                host == "youtube.com"
+                or host.endswith(".youtube.com")
+                or host == "youtu.be"
+            )
+        )
+
+    except ValueError:
+        return False
+
+
+def telecharger_video(url, qualite):
+
+
+    try:
+        if not ffmpeg_path:
+            raise RuntimeError(
+                "FFmpeg introuvable. "
+                "Ajoutez ffmpeg.exe et ffprobe.exe dans tools."
+            )
+
+        if not shutil.which("deno"):
+            raise RuntimeError(
+                "Deno introuvable. Ajoutez deno.exe dans tools."
+            )
+
+        evenements.put((
+            "status",
+            "Analyse de la vidéo...",
+            "#facc15"
+        ))
+
+        def progress_hook(info):
+            etat = info.get("status")
+
+            if etat == "downloading":
+                total = (
+                    info.get("total_bytes")
+                    or info.get("total_bytes_estimate")
+                    or 0
+                )
+
+                downloaded = info.get("downloaded_bytes") or 0
+
+                if total > 0:
+                    value = min(1.0, downloaded / total)
+
+                    texte = (
+                        f"{format_size(downloaded)} / "
+                        f"{format_size(total)} "
+                        f"({value * 100:.0f} %) "
+                        "- téléchargement du flux"
+                    )
+
+                    evenements.put((
+                        "progress",
+                        value,
+                        texte
+                    ))
+
+            elif etat == "finished":
+                evenements.put((
+                    "status",
+                    "Flux reçu, traitement en cours...",
+                    "#facc15"
+                ))
+
+
+        options = {
+            "format": (
+                f"bv[vcodec^=avc1][height<={qualite}]+ba[ext=m4a]/"
+                f"bv[height<={qualite}]+ba/b"
+            ),
+
+            "outtmpl": str(
+                DOWNLOAD_DIR / "%(title)s [%(id)s].%(ext)s"
+            ),
+
+            "merge_output_format": "mp4",
+            "ffmpeg_location": ffmpeg_path,
+            "progress_hooks": [progress_hook],
+
+            "quiet": True,
+            "no_warnings": False,
+
+            "socket_timeout": 60,
+            "retries": 10,
+            "fragment_retries": 10,
+
+            "noplaylist": True,
+        }
+
+        with yt_dlp.YoutubeDL(options) as ydl:
+            result = ydl.download([url])
+
+        if result != 0:
+            raise RuntimeError(
+                f"yt-dlp a terminé avec le code {result}."
+            )
+
+        evenements.put((
+            "success",
+            "Téléchargement terminé. "
+            "Vérifiez votre dossier Downloads."
+        ))
+
+        logging.info(
+            "Téléchargement terminé : %s", url
+        )
+
+    except Exception as exc:
+        logging.exception("Échec du téléchargement")
+
+        evenements.put((
+            "error",
+            f"Téléchargement impossible : {exc}"
+        ))
+
+    finally:
+        evenements.put(("ready",))
+
+
+def lancer_telechargement():
     url = entree_url.get().strip()
     qualite = combo_qualite.get()
 
-    if not url:
+    if not url_youtube_valide(url):
         messagebox.showwarning(
-            "Erreur",
-            "Veuillez entrer une URL valide."
+            "Lien invalide",
+            "Veuillez entrer une URL YouTube valide."
         )
         return
 
-    if "youtube.com" not in url and "youtu.be" not in url:
-        messagebox.showwarning(
-            "Erreur",
-            "Veuillez entrer un lien YouTube valide s'il-vous-plait."
-        )
-        return
+    bouton_download.configure(
+        state="disabled",
+        text="En cours..."
+    )
+
+    progress_bar.set(0)
+    progress_bar.pack(
+        pady=(0, 5),
+        padx=25,
+        fill="x"
+    )
+
+    label_status.configure(
+        text="Préparation...",
+        text_color="#facc15"
+    )
 
     threading.Thread(
         target=telecharger_video,
@@ -111,140 +243,112 @@ def lancer_telechargement():
     ).start()
 
 
-def telecharger_video(url, qualite):
+def traiter_evenements():
+    """Traite les événements dans le thread principal Tkinter."""
 
-    bouton_download.configure(
-        state="disabled",
-        text=" En cours..."
-    )
+    try:
+        while True:
+            evenement = evenements.get_nowait()
+            action = evenement[0]
 
-    progress_bar.set(0)
+            if action == "progress":
+                _, progression, texte = evenement
 
-    progress_bar.pack(
-        pady=(0, 5),
-        padx=25,
-        fill="x"
-    )
-
-    label_status.configure(
-        text="Analyse de la vidéo...",
-        text_color="#facc15"
-    )
-
-    def progress_hook(d):
-
-        if d['status'] == 'downloading':
-
-            total = d.get('total_bytes', 0) or d.get(
-                'total_bytes_estimate',
-                0
-            )
-
-            downloaded = d.get('downloaded_bytes', 0)
-
-            if total > 0:
-
-                progress = downloaded / total
-
-                progress_bar.set(progress)
+                progress_bar.set(progression)
 
                 label_status.configure(
-                    text=f"{format_size(downloaded)} / "
-                         f"{format_size(total)} "
-                         f"({int(progress * 100)}%)",
+                    text=texte,
                     text_color="#60a5fa"
                 )
 
-        elif d['status'] == 'finished':
+            elif action == "status":
+                _, texte, couleur = evenement
 
-            progress_bar.set(1.0)
+                label_status.configure(
+                    text=texte,
+                    text_color=couleur
+                )
 
-            label_status.configure(
-                text="Téléchargement terminé",
-                text_color="#FFFFFF"
-            )
+            elif action == "success":
+                progress_bar.set(1.0)
 
-    dossier_telechargement = os.path.join(
-        os.path.expanduser("~"),
-        "Downloads"
-    )
+                label_status.configure(
+                    text=evenement[1],
+                    text_color="#4ade80"
+                )
 
-    print("Téléchargement vers :", dossier_telechargement)
+            elif action == "error":
+                label_status.configure(
+                    text="Erreur : consultez DownloadVideo.log",
+                    text_color="#f87171"
+                )
 
-    print("FFmpeg path:", ffmpeg_path)
+                messagebox.showerror(
+                    "Échec du téléchargement",
+                    evenement[1]
+                )
 
-    print("Existe :", os.path.exists(ffmpeg_path))
+            elif action == "ready":
+                bouton_download.configure(
+                    state="normal",
+                    text="Download"
+                )
 
-    ydl_opts = {
-        'format': f'bv*[height<={qualite}][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best',
-        'outtmpl': os.path.join(
-            dossier_telechargement,
-            '%(title)s.%(ext)s'
-        ),
-        'merge_output_format': 'mp4',
-        'progress_hooks': [progress_hook],
-        'quiet': False,
-        'ffmpeg_location': ffmpeg_path,
-        'socket_timeout': 60,
-        'retries': 10,
-        'fragment_retries': 10,
-        'concurrent_fragment_downloads': 10,
-        'throttledratelimit': 0,
-    }
+                progress_bar.pack_forget()
 
+    except queue.Empty:
+        pass
+
+    fenetre.after(100, traiter_evenements)
+
+
+
+if sys.platform == "win32":
     try:
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-
-    except Exception as e:
-        print("Error 259 :", e)
-        ydl_opts['format'] = (
-            f'bestvideo[height<={qualite}]'
-            f'+bestaudio/best'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "mon_application.video_downloader.beta"
         )
+    except OSError:
+        pass
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-    finally:
-        bouton_download.configure(
-            state="normal",
-            text="Download"
-        )
-        progress_bar.pack_forget()
-        label_status.configure(text="Prêt pour un nouveau téléchargement", text_color="#94a3b8")
 
-        progress_bar.pack_forget()
-
-myappid = 'mon_application.video_downloader.beta'
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 fenetre = ctk.CTk()
 
-fenetre.iconbitmap(resource_path("assets/icon.ico"))
+icon_path = resource_path("assets/icon.ico")
+
+if icon_path.is_file():
+    fenetre.iconbitmap(str(icon_path))
 
 fenetre.title("Download video")
-
 fenetre.geometry("645x450")
-
 fenetre.resizable(False, False)
+
+
 
 titre_label = ctk.CTkLabel(
     fenetre,
     text="Download video",
-    font=ctk.CTkFont(size=24, weight="bold")
+    font=ctk.CTkFont(
+        size=24,
+        weight="bold"
+    )
 )
 
 titre_label.pack(pady=(20, 5))
 
+
+
 sous_titre = ctk.CTkLabel(
     fenetre,
-    text="100% Local mais en beta pour le moment..., CTRL+C pour copie et CTRL+V pour coller URL",
+    text="100% local version bêta",
     font=ctk.CTkFont(size=13),
     text_color="#FFFFFF"
 )
 
 sous_titre.pack(pady=(0, 10))
+
+
 
 cadre = ctk.CTkFrame(
     fenetre,
@@ -258,10 +362,15 @@ cadre.pack(
     expand=True
 )
 
+
+
 label_url = ctk.CTkLabel(
     cadre,
-    text=" Lien de la vidéo",
-    font=ctk.CTkFont(size=13, weight="bold")
+    text="Lien de la vidéo",
+    font=ctk.CTkFont(
+        size=13,
+        weight="bold"
+    )
 )
 
 label_url.pack(
@@ -269,6 +378,8 @@ label_url.pack(
     anchor="w",
     padx=20
 )
+
+
 
 entree_url = ctk.CTkEntry(
     cadre,
@@ -282,6 +393,8 @@ entree_url.pack(
     padx=20
 )
 
+
+
 frame_qualite = ctk.CTkFrame(
     cadre,
     fg_color="transparent"
@@ -293,13 +406,20 @@ frame_qualite.pack(
     fill="x"
 )
 
+
+
 label_qualite = ctk.CTkLabel(
     frame_qualite,
-    text=" Quality :",
-    font=ctk.CTkFont(size=13, weight="bold")
+    text="Quality :",
+    font=ctk.CTkFont(
+        size=13,
+        weight="bold"
+    )
 )
 
 label_qualite.pack(side="left")
+
+
 
 combo_qualite = ctk.CTkComboBox(
     frame_qualite,
@@ -308,28 +428,35 @@ combo_qualite = ctk.CTkComboBox(
     width=100
 )
 
+combo_qualite.set("1080")
+
 combo_qualite.pack(
     side="left",
     padx=10
 )
 
+
 label_qualite_info = ctk.CTkLabel(
     frame_qualite,
     text="pixels",
     font=ctk.CTkFont(size=12),
-    text_color="#64748b"
+    text_color="#94a3b8"
 )
 
 label_qualite_info.pack(side="left")
 
+
+
 label_status = ctk.CTkLabel(
     fenetre,
-    text="Pour instant, c'est en beta!",
+    text="Prêt pour un téléchargement",
     font=ctk.CTkFont(size=12),
     text_color="#FFFFFF"
 )
 
 label_status.pack(pady=(5, 0))
+
+
 
 progress_bar = ctk.CTkProgressBar(
     fenetre,
@@ -338,12 +465,17 @@ progress_bar = ctk.CTkProgressBar(
 
 progress_bar.set(0)
 
+
+
 bouton_download = ctk.CTkButton(
     fenetre,
-    text=" Download",
+    text="Download",
     command=lancer_telechargement,
     height=45,
-    font=ctk.CTkFont(size=15, weight="bold"),
+    font=ctk.CTkFont(
+        size=15,
+        weight="bold"
+    ),
     corner_radius=10
 )
 
@@ -352,5 +484,10 @@ bouton_download.pack(
     padx=25,
     fill="x"
 )
+
+
+
+fenetre.after(100, traiter_evenements)
+
 
 fenetre.mainloop()
