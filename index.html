@@ -112,9 +112,11 @@
       const owner="rcdavid339-sketch", repo="download_video", assetName="DownloadVideo-Windows.zip";
       const button=document.getElementById("download"), status=document.getElementById("release-status"), version=document.getElementById("version-label");
       try{
-        const response=await fetch("https://api.github.com/repos/"+owner+"/"+repo+"/releases/latest",{headers:{"Accept":"application/vnd.github+json"}});
-        if(!response.ok)throw new Error("No published release");
-        const data=await response.json();
+        const response=await fetch("https://api.github.com/repos/"+owner+"/"+repo+"/releases?per_page=20",{headers:{"Accept":"application/vnd.github+json"}});
+        if(!response.ok)throw new Error("Unable to fetch releases");
+        const releases=await response.json();
+        const data=releases.find(item=>!item.draft && (item.assets||[]).some(asset=>asset.name===assetName && asset.browser_download_url));
+        if(!data)throw new Error("No release with a Windows ZIP");
         const asset=(data.assets||[]).find(item=>item.name===assetName && item.browser_download_url);
         if(!asset){status.textContent="Version GitHub publiée, mais l'archive Windows n'est pas encore disponible.";version.textContent=(data.tag_name||"Version") + " · Archive Windows à ajouter";return}
         button.href=asset.browser_download_url;
@@ -124,7 +126,7 @@
         status.textContent="Version "+(data.tag_name||"disponible")+" · Téléchargement prêt";
         version.textContent=(data.tag_name||"Dernière version")+" · "+assetName;
       }catch(_){
-        status.textContent="Le téléchargement sera activé dès la publication de la première version sur GitHub.";
+        status.textContent="Aucune archive Windows publiée pour le moment. Consultez les versions sur GitHub.";
       }
     })();
   </script>
