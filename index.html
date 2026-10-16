@@ -63,10 +63,10 @@
         <h1>Vos vidéos.<br><em>Votre ordinateur.</em></h1>
         <p class="intro">Download Video est une application Windows avec une interface simple pour enregistrer localement des vidéos que vous êtes autorisé à télécharger. Choisissez la qualité et suivez la progression.</p>
         <div class="actions">
-          <a id="download" class="button primary disabled" aria-disabled="true" tabindex="-1" href="#telechargement">↓ Télécharger pour Windows</a>
+          <a id="download" class="button primary" href="https://github.com/rcdavid339-sketch/download_video/releases/download/v0.1.0/DownloadVideo-Windows.zip">↓ Télécharger pour Windows</a>
           <a class="button secondary" href="#fonctionnalites">Découvrir les fonctions →</a>
         </div>
-        <div id="release-status" class="status" role="status" aria-live="polite">Recherche d'une version publiée…</div>
+        <div id="release-status" class="status" role="status" aria-live="polite">Version bêta v0.1.0 · Téléchargement disponible</div>
       </div>
       <div class="preview" aria-label="Illustration de l'interface Download Video">
         <div class="window">
@@ -100,8 +100,8 @@
     </section>
     <section id="telechargement" class="wrap" style="padding-bottom:80px">
       <div class="download-panel">
-        <div><h2>Download Video pour Windows</h2><p id="version-label">Version bêta · Archive ZIP à publier</p></div>
-        <a id="download-bottom" href="https://github.com/rcdavid339-sketch/download_video/releases" class="button secondary">Consulter les versions ↗</a>
+        <div><h2>Download Video pour Windows</h2><p id="version-label">Version bêta v0.1.0 · Archive Windows ZIP</p></div>
+        <a id="download-bottom" href="https://github.com/rcdavid339-sketch/download_video/releases/download/v0.1.0/DownloadVideo-Windows.zip" class="button primary">↓ Télécharger le ZIP Windows</a>
       </div>
       <p class="status" style="margin-top:15px">Téléchargez et utilisez uniquement les contenus dont vous détenez les droits ou pour lesquels vous disposez d'une autorisation. Logiciel indépendant, non affilié à YouTube.</p>
     </section>
@@ -110,7 +110,7 @@
   <script>
     (async function(){
       const owner="rcdavid339-sketch", repo="download_video", assetName="DownloadVideo-Windows.zip";
-      const button=document.getElementById("download"), status=document.getElementById("release-status"), version=document.getElementById("version-label");
+      const button=document.getElementById("download"), bottom=document.getElementById("download-bottom"), status=document.getElementById("release-status"), version=document.getElementById("version-label");
       try{
         const response=await fetch("https://api.github.com/repos/"+owner+"/"+repo+"/releases?per_page=20",{headers:{"Accept":"application/vnd.github+json"}});
         if(!response.ok)throw new Error("Unable to fetch releases");
@@ -120,13 +120,11 @@
         const asset=(data.assets||[]).find(item=>item.name===assetName && item.browser_download_url);
         if(!asset){status.textContent="Version GitHub publiée, mais l'archive Windows n'est pas encore disponible.";version.textContent=(data.tag_name||"Version") + " · Archive Windows à ajouter";return}
         button.href=asset.browser_download_url;
-        button.classList.remove("disabled");
-        button.removeAttribute("aria-disabled");
-        button.removeAttribute("tabindex");
+        bottom.href=asset.browser_download_url;
         status.textContent="Version "+(data.tag_name||"disponible")+" · Téléchargement prêt";
         version.textContent=(data.tag_name||"Dernière version")+" · "+assetName;
       }catch(_){
-        status.textContent="Aucune archive Windows publiée pour le moment. Consultez les versions sur GitHub.";
+        status.textContent="Version bêta v0.1.0 · Téléchargement direct disponible";
       }
     })();
   </script>
