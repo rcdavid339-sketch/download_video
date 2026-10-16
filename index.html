@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080f20">
+  <meta name="description" content="Download Video : une application Windows pour télécharger des vidéos que vous êtes autorisé à enregistrer.">
+  <title>Download Video — Application Windows</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080e1d;--panel:#101a30;--line:#283a55;--text:#edf5ff;--muted:#a7b8cf;--blue:#4ca7ff;--blue2:#2570ec}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 75% 3%,#113567 0%,transparent 42%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.6}
+    a{color:inherit;text-decoration:none}button,a{transition:background .2s,transform .2s,border-color .2s}a:focus-visible{outline:3px solid #77c9ff;outline-offset:4px}
+    .wrap{width:min(1100px,calc(100% - 38px));margin:auto}
+    header{border-bottom:1px solid #21304a;background:#080e1dcc;backdrop-filter:blur(15px);position:sticky;top:0;z-index:2}
+    .nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.15rem;letter-spacing:-.02em}.mark{background:linear-gradient(135deg,#6aceff,#3074fd);border-radius:13px;display:grid;place-items:center;width:43px;height:43px;box-shadow:0 9px 30px #087af03a;color:#051126;font-weight:900}
+    .brand span span{color:#61b9ff}nav{display:flex;gap:24px;color:var(--muted);font-size:.94rem}nav a:hover{color:white}
+    .toplink{border:1px solid #416ba3;padding:10px 16px;border-radius:11px;font-size:.9rem}
+    .toplink:hover{background:#192c4a}
+    .hero{padding:90px 0 64px;display:grid;grid-template-columns:1.06fr .94fr;gap:46px;align-items:center}
+    .tag{display:inline-flex;align-items:center;gap:8px;border:1px solid #2f577f;border-radius:30px;background:#1833538a;padding:6px 13px;color:#a8d8ff;font-size:.8rem;font-weight:650}
+    h1{font-size:clamp(2.7rem,5.6vw,4.4rem);line-height:1.09;margin:20px 0 18px;letter-spacing:-.055em}
+    h1 em{font-style:normal;color:#6bbcff}.intro{font-size:1.1rem;color:var(--muted);max-width:580px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin:27px 0 10px}
+    .button{border-radius:12px;padding:14px 22px;display:inline-flex;gap:10px;align-items:center;justify-content:center;font-weight:720;border:1px solid #3f6b9f}
+    .button.primary{background:linear-gradient(135deg,#59b7ff,#2c78ed);border:0;color:#061428;box-shadow:0 8px 30px #3085fa30}
+    .button.primary:hover:not(.disabled){transform:translateY(-2px)}
+    .button.secondary:hover{background:#192b48}.button.disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+    .status{font-size:.85rem;color:var(--muted);min-height:1.5em}
+    .preview{border-radius:24px;border:1px solid #39577d;background:linear-gradient(160deg,#172847,#0e172a);padding:24px;box-shadow:0 25px 70px #0009}
+    .window{border:1px solid #355073;border-radius:16px;background:#0b1629;overflow:hidden}
+    .window-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2b4261;background:#15233a;padding:12px 16px;font-size:.83rem;color:#d5e8ff}
+    .dots{display:flex;gap:6px}.dots i{display:block;width:8px;height:8px;border-radius:50%;background:#6591c4}
+    .window-body{padding:27px 21px 23px;text-align:center}.window-body h3{margin:0 0 6px;font-size:1.7rem}.window-body p{color:#96aecb;font-size:.85rem;margin:0 0 25px}
+    .fake-label{text-align:left;font-size:.8rem;margin-bottom:6px;color:#b6c9e1}.fake-input{border:1px solid #395777;border-radius:9px;background:#1a2d48;padding:12px;color:#c1dcff;text-align:left;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fake-bottom{display:flex;align-items:center;justify-content:space-between;margin:14px 0 22px;color:#aec8e6;font-size:.8rem}.fake-choice{background:#263d5c;border-radius:7px;padding:5px 12px}
+    .fake-button{background:#267be9;border-radius:9px;padding:11px;font-weight:750}
+    section.features{padding:60px 0 36px}section h2{font-size:clamp(1.75rem,3vw,2.45rem);letter-spacing:-.035em;margin:0 0 12px}
+    .section-sub{color:var(--muted);margin-top:0;max-width:720px}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:17px;margin-top:30px}
+    .card{background:#101c32;border:1px solid #2a405e;border-radius:17px;padding:24px}.card .symbol{font-size:1.6rem}.card h3{font-size:1.1rem;margin:15px 0 7px}.card p{color:var(--muted);margin:0;font-size:.94rem}
+    .install{padding:55px 0 85px}.steps{margin-top:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .step{padding:23px;border:1px solid #293f5e;border-radius:15px;background:#0d192e}.num{display:inline-grid;place-items:center;width:30px;height:30px;background:#204b7a;border-radius:9px;color:#d0ebff;font-weight:750}.step h3{margin:13px 0 7px;font-size:1rem}.step p{font-size:.92rem;margin:0;color:var(--muted)}
+    .download-panel{padding:30px;border:1px solid #396395;border-radius:20px;background:linear-gradient(110deg,#193c67,#12233e);display:flex;align-items:center;justify-content:space-between;gap:25px;flex-wrap:wrap}
+    .download-panel h2{margin:0 0 7px}.download-panel p{margin:0;color:#bdd5ef}
+    footer{border-top:1px solid #23344e;padding:29px 0;color:var(--muted);font-size:.86rem}
+    footer .foot{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    footer a{text-decoration:underline;text-underline-offset:3px}
+    @media(max-width:850px){.hero{grid-template-columns:1fr;padding-top:55px}.preview{max-width:620px;width:100%;margin:auto}nav{display:none}.cards,.steps{grid-template-columns:1fr}.toplink{display:none}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button,a{transition:none}}
+  </style>
+</head>
+<body>
+  <header><div class="wrap nav">
+    <a href="#accueil" class="brand"><span class="mark" aria-hidden="true">DV</span><span>Download<span>Video</span></span></a>
+    <nav aria-label="Navigation principale"><a href="#fonctionnalites">Fonctionnalités</a><a href="#installation">Installation</a><a href="#telechargement">Télécharger</a></nav>
+    <a class="toplink" href="https://github.com/rcdavid339-sketch/download_video" rel="noopener noreferrer">Voir sur GitHub ↗</a>
+  </div></header>
+  <main>
+    <div id="accueil" class="wrap hero">
+      <div>
+        <span class="tag">● Application Windows · Version bêta</span>
+        <h1>Vos vidéos.<br><em>Votre ordinateur.</em></h1>
+        <p class="intro">Download Video est une application Windows avec une interface simple pour enregistrer localement des vidéos que vous êtes autorisé à télécharger. Choisissez la qualité et suivez la progression.</p>
+        <div class="actions">
+          <a id="download" class="button primary disabled" aria-disabled="true" tabindex="-1" href="#telechargement">↓ Télécharger pour Windows</a>
+          <a class="button secondary" href="#fonctionnalites">Découvrir les fonctions →</a>
+        </div>
+        <div id="release-status" class="status" role="status" aria-live="polite">Recherche d'une version publiée…</div>
+      </div>
+      <div class="preview" aria-label="Illustration de l'interface Download Video">
+        <div class="window">
+          <div class="window-head"><span>Download Video</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="window-body">
+            <h3>Download Video</h3><p>Application locale · bêta</p>
+            <div class="fake-label">Lien de la vidéo</div>
+            <div class="fake-input">https://www.youtube.com/watch?v=...</div>
+            <div class="fake-bottom"><span>Quality :</span><span class="fake-choice">1080p ▾</span></div>
+            <div class="fake-button">Download</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <section id="fonctionnalites" class="features wrap">
+      <h2>Une application simple à utiliser</h2>
+      <p class="section-sub">Une interface épurée et des outils intégrés pour gérer vos téléchargements sur Windows.</p>
+      <div class="cards">
+        <article class="card"><div class="symbol" aria-hidden="true">▣</div><h3>Qualité au choix</h3><p>Sélectionnez 720p, 1080p ou 1440p selon les formats réellement disponibles.</p></article>
+        <article class="card"><div class="symbol" aria-hidden="true">◴</div><h3>Progression visible</h3><p>Suivez l'avancement du téléchargement depuis l'interface.</p></article>
+        <article class="card"><div class="symbol" aria-hidden="true">▤</div><h3>Enregistrement local</h3><p>Vos fichiers sont enregistrés sur votre PC. Une connexion Internet reste nécessaire pour accéder aux vidéos.</p></article>
+      </div>
+    </section>
+    <section id="installation" class="install wrap">
+      <h2>Installation en trois étapes</h2>
+      <div class="steps">
+        <div class="step"><span class="num">1</span><h3>Télécharger l'archive</h3><p>Récupérez la dernière version Windows depuis cette page lorsqu'elle sera publiée.</p></div>
+        <div class="step"><span class="num">2</span><h3>Extraire le ZIP</h3><p>Décompressez le dossier complet, y compris le sous-dossier _internal.</p></div>
+        <div class="step"><span class="num">3</span><h3>Lancer DownloadVideo.exe</h3><p>Ouvrez l'application depuis le dossier extrait et utilisez uniquement des liens autorisés.</p></div>
+      </div>
+    </section>
+    <section id="telechargement" class="wrap" style="padding-bottom:80px">
+      <div class="download-panel">
+        <div><h2>Download Video pour Windows</h2><p id="version-label">Version bêta · Archive ZIP à publier</p></div>
+        <a id="download-bottom" href="https://github.com/rcdavid339-sketch/download_video/releases" class="button secondary">Consulter les versions ↗</a>
+      </div>
+      <p class="status" style="margin-top:15px">Téléchargez et utilisez uniquement les contenus dont vous détenez les droits ou pour lesquels vous disposez d'une autorisation. Logiciel indépendant, non affilié à YouTube.</p>
+    </section>
+  </main>
+  <footer><div class="wrap foot"><span>© 2026 Download Video · Projet indépendant</span><span><a href="https://github.com/rcdavid339-sketch/download_video">Code et versions sur GitHub</a></span></div></footer>
+  <script>
+    (async function(){
+      const owner="rcdavid339-sketch", repo="download_video", assetName="DownloadVideo-Windows.zip";
+      const button=document.getElementById("download"), status=document.getElementById("release-status"), version=document.getElementById("version-label");
+      try{
+        const response=await fetch("https://api.github.com/repos/"+owner+"/"+repo+"/releases/latest",{headers:{"Accept":"application/vnd.github+json"}});
+        if(!response.ok)throw new Error("No published release");
+        const data=await response.json();
+        const asset=(data.assets||[]).find(item=>item.name===assetName && item.browser_download_url);
+        if(!asset){status.textContent="Version GitHub publiée, mais l'archive Windows n'est pas encore disponible.";version.textContent=(data.tag_name||"Version") + " · Archive Windows à ajouter";return}
+        button.href=asset.browser_download_url;
+        button.classList.remove("disabled");
+        button.removeAttribute("aria-disabled");
+        button.removeAttribute("tabindex");
+        status.textContent="Version "+(data.tag_name||"disponible")+" · Téléchargement prêt";
+        version.textContent=(data.tag_name||"Dernière version")+" · "+assetName;
+      }catch(_){
+        status.textContent="Le téléchargement sera activé dès la publication de la première version sur GitHub.";
+      }
+    })();
+  </script>
+</body>
+</html>
